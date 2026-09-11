@@ -32,3 +32,6 @@ A、B、C 包含相同的搜尋、拖曳／縮放、時間播放／倒轉、地�
 - API 參考：https://github.com/cosinekitty/astronomy/blob/master/source/js/README.md
 - 感測權限：https://developer.mozilla.org/en-US/docs/Web/API/DeviceOrientationEvent/requestPermission_static
 - 相機：https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
+
+## 0.3.4 觀測修正
+預設隱藏密集 DSO／銀河輪廓；定位回报誤差。Safari 相對姿態需已知地標方位校正，未校正不顯示 AR 星體／方位；不把 webkitCompassHeading 當成 Euler alpha。太陽數據用於方向參考，勿直視太陽校正。新版仍待實體 iPad 重測。
