@@ -29,6 +29,8 @@ function encodeScene(s){return encodeURIComponent(JSON.stringify(validScene(s)))
 function decodeScene(s){if(s.length>12000)throw Error('情境連結過長');return validScene(JSON.parse(decodeURIComponent(s)));}
 function shiftMonth(time,amount){const d=new Date(time),day=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+amount);const end=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(day,end));return d.getTime();}
 function phaseName(angle){if(angle<10||angle>350)return '新月';if(angle<80)return '眉月';if(angle<100)return '上弦月';if(angle<170)return '盈凸月';if(angle<190)return '滿月';if(angle<260)return '虧凸月';if(angle<280)return '下弦月';return '殘月';}
-const api={D,clamp,wrap,equatorial,horizontal,project,cameraBasis,altAzVector,validScene,encodeScene,decodeScene,shiftMonth,phaseName};
+function directionName(az){return ["北 N","東北 NE","東 E","東南 SE","南 S","西南 SW","西 W","西北 NW"][Math.round(wrap(az)/45)%8];}
+function guideTarget(target,cam){if(target.alt<0)return {kind:"below"};const v=altAzVector(target.az,target.alt),b=cameraBasis(cam.az,cam.alt),z=dot(v,b.f),r=(cam.roll||0)*D,x=dot(v,b.r)*Math.cos(r)-dot(v,b.u)*Math.sin(r),y=dot(v,b.r)*Math.sin(r)+dot(v,b.u)*Math.cos(r);const distance=Math.acos(clamp(z,-1,1))/D;return {kind:distance<5?"found":"turn",angle:Math.abs(x)+Math.abs(y)<1e-8?90:Math.atan2(x,y)/D,distance};}
+const api={directionName,guideTarget,D,clamp,wrap,equatorial,horizontal,project,cameraBasis,altAzVector,validScene,encodeScene,decodeScene,shiftMonth,phaseName};
 if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.SkyCore=api;
 })(globalThis);

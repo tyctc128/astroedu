@@ -34,3 +34,8 @@ html[data-theme=C] #discovery-list>button{min-height:44px}
 @media print{.sky-quick-actions{display:none!important}}
 
 #ar-live-status{position:absolute;left:12px;right:12px;bottom:66px;padding:8px 12px;border-radius:10px;background:#081426e8;color:#fff;font-size:12px;line-height:1.6;pointer-events:none}#geo-status{padding:12px;border:1px solid var(--accent);border-radius:10px;margin-bottom:12px}#sensor-state,#camera-state{margin:12px 0;font-weight:600}
+
+/* v0.3.5: field observation and moon guidance */
+#view-direction{font-size:clamp(15px,2vw,22px);font-weight:800;letter-spacing:.03em;color:#fff;text-shadow:0 1px 4px #000}.view-readout{background:#091323d9;border:1px solid #ffffff40;border-radius:12px;padding:8px 12px}#moon-guide{position:absolute;left:50%;top:42%;transform:translateX(-50%);max-width:85%;width:max-content;display:flex;align-items:center;gap:12px;background:#07172aee;color:#fff;padding:14px 18px;border:2px solid #8cdce9;border-radius:18px;pointer-events:none;font-weight:700;z-index:5;text-align:center}#moon-guide[hidden]{display:none}.moon-arrow{display:inline-block;font-size:48px;line-height:1}.observe-start{width:100%;min-height:54px;font-size:18px}#ar-live-status{max-width:calc(100% - 32px);font-size:13px;line-height:1.5}.quick-ar.active{background:#047d74!important;color:white!important}@media(max-width:600px){#view-direction{font-size:15px}#moon-guide{font-size:13px;top:44%;padding:10px}.moon-arrow{font-size:36px}}
+
+#dialog .dialog-actions{flex-wrap:wrap}#dialog .dialog-actions>button{flex:1 1 125px}
