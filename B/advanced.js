@@ -30,7 +30,7 @@ root.SkyAdvanced=function(H){
  const {state,A,C,canvas,pos,objects,modal,close,toast,fmt,esc,setTime,select,snapshot,download,change}=H,$=s=>document.querySelector(s);
  let panorama=null,stream=null,sensing=false,offset=0,lastOrientation=null,session=0,sensorTimer=null,lastSensor=0;
  let lastSensorPaint=0,calibrated=false,absoluteUntil=0,sensorMessage='尚未啟用方向';
- let sensorSource=null,flatSamples=[],filtered=null,alignment=null,aligning=false,alignTarget='Sun',lastRaw=null,shortFov=55,videoShape=null,cameraSession=0;
+ let compassAccuracy=null,sensorSource=null,flatSamples=[],filtered=null,alignment=null,aligning=false,alignTarget='Sun',lastRaw=null,shortFov=55,videoShape=null,cameraSession=0;
  let lab='system',base=null,answer='',prediction='',orbitYaw=.6,orbitPitch=.55;
  const units={system:['日地月 3D 聯動','月球亮面為何改變？','比較新月與滿月時日地月的位置。','一般月相來自觀測方向，並非地球遮住陽光。'],compare:['雙視窗比較','相隔兩小時，星星在哪裡？','左右固定相同視角，右側為兩小時後。','地球自轉改變恆星的地平位置。'],solar:['日食','每逢新月都會日食嗎？','搜尋下一次當地日食，再查看接觸與食甚時間。','月球軌道傾斜，通常影子不會落在地球上。'],lunar:['月食','每逢滿月都會月食嗎？','搜尋下一次月食，檢查月球高度與食的種類。','滿月還需接近軌道交點才會進入地球影子。'],retro:['行星逆行','火星是否真的倒著繞太陽？','逐日檢查火星赤經軌跡與地球、火星的位置。','地球超越外行星時，視線方向可以暫時向西移動。'],latitude:['緯度與北極星','北極星高度會等於緯度嗎？','改變緯度，比較北極星高度與北天極。','北極星靠近北天極，但不完全重合；南半球通常在地平線下。'],sunpath:['季節太陽路徑','夏至的太陽在各地都最高嗎？','比較二分二至整天路徑，再改變緯度。','日行軌跡由地軸傾角與緯度決定，南北半球季節相反。']};
  const ob=()=>new A.Observer(state.place.lat,state.place.lon,0);
@@ -84,14 +84,15 @@ root.SkyAdvanced=function(H){
  function sensorStatus(s){sensorMessage=s;if($('#sensor-state'))$('#sensor-state').textContent=s;if($('#observe-direction'))$('#observe-direction').textContent=s;hud();}
  function unaligned(){return (state.live||!!stream)&&(!state.locationReady&&state.live||(!sensing||!lastOrientation||Date.now()-lastSensor>2500||(!calibrated&&Date.now()>absoluteUntil)));}
  function hud(){let el=$('#ar-live-status');if(!stream&&!sensing){el?.remove();return;}if(!el){el=document.createElement('div');el.id='ar-live-status';el.setAttribute('role','status');canvas.parentElement.append(el);}el.textContent=(!state.locationReady&&state.live?'請先取得位置 · ':'')+sensorMessage;}
+ function compassQuality(){return compassAccuracy===null?'方向已取得 · 羅盤精度未提供':compassAccuracy<0?'方向沿用上次參考 · 羅盤目前未校正':`方向已取得 · 羅盤估計誤差 ±${Math.round(compassAccuracy)}°${compassAccuracy>15?'（概略方向）':''}`;}
  function sensorEvent(e){if(!sensing||![e.alpha,e.beta,e.gamma].every(Number.isFinite))return;const now=Date.now();
  const incoming=e.absolute?'absolute':'relative';if(sensorSource&&incoming!==sensorSource){if(!calibrated&&incoming==='absolute'){sensorSource=incoming;filtered=null;flatSamples=[];}else return;}else sensorSource=incoming;
  const dt=lastSensor?(now-lastSensor)/1000:.016;lastSensor=now;const q=orientation(e.alpha,e.beta,e.gamma,root.screen?.orientation?.angle??root.orientation??0);lastOrientation=q;
  if(e.absolute){absoluteUntil=now+2500;sensorMessage=alignment?'已依畫面對齊':'方向已準備好 · 羅盤為近似方位';}
- else if(!calibrated){const flat=Math.abs(e.beta)<15&&Math.abs(e.gamma)<15,accurate=Number.isFinite(e.webkitCompassHeading)&&Number.isFinite(e.webkitCompassAccuracy)&&e.webkitCompassAccuracy>=0&&e.webkitCompassAccuracy<=15;
- if(flat&&accurate){const value=C.wrap(e.webkitCompassHeading+e.alpha);if(flatSamples.length&&Math.abs(((value-flatSamples[0].value+540)%360)-180)>3)flatSamples=[];flatSamples.push({value,time:now});if(flatSamples.length>=8&&now-flatSamples[0].time>=900){const x=flatSamples.reduce((n,p)=>n+Math.cos(p.value*D),0),y=flatSamples.reduce((n,p)=>n+Math.sin(p.value*D),0);offset=C.wrap(Math.atan2(y,x)/D);calibrated=true;filtered=null;sensorMessage='方向已準備好 · 拿起裝置指向天空';}else sensorMessage='保持平放約 1 秒，正在確認方向…';}
- else {flatSamples=[];sensorMessage=!flat?'請平放裝置、螢幕朝上，保持 1 秒':!Number.isFinite(e.webkitCompassHeading)?'瀏覽器未提供羅盤方位，可改用相機對齊':!Number.isFinite(e.webkitCompassAccuracy)?'瀏覽器未提供羅盤精度，可改用相機對齊':e.webkitCompassAccuracy<0?'羅盤回報尚未校正，可改用相機對齊':`羅盤估計誤差 ±${Math.round(e.webkitCompassAccuracy)}°，目前不足以自動對準；可改用相機對齊`;}}
- else sensorMessage=alignment?'已依畫面對齊；若偏移可重新對齊':'方向已準備好 · 羅盤為近似方位';
+ else if(!calibrated){compassAccuracy=Number.isFinite(e.webkitCompassAccuracy)?e.webkitCompassAccuracy:null;const flat=Math.abs(e.beta)<15&&Math.abs(e.gamma)<15,accurate=Number.isFinite(e.webkitCompassHeading)&&e.webkitCompassHeading>=0&&e.webkitCompassHeading<360&&(compassAccuracy===null||compassAccuracy>=0);
+ if(flat&&accurate){const value=C.wrap(e.webkitCompassHeading+e.alpha);if(flatSamples.length&&Math.abs(((value-flatSamples[0].value+540)%360)-180)>Math.max(3,Math.min(45,compassAccuracy??30)))flatSamples=[];flatSamples.push({value,time:now});if(flatSamples.length>=8&&now-flatSamples[0].time>=900){const x=flatSamples.reduce((n,p)=>n+Math.cos(p.value*D),0),y=flatSamples.reduce((n,p)=>n+Math.sin(p.value*D),0);offset=C.wrap(Math.atan2(y,x)/D);calibrated=true;filtered=null;sensorMessage=compassQuality();}else sensorMessage='保持平放約 1 秒，正在確認方向…';}
+ else {flatSamples=[];sensorMessage=!flat?'請平放裝置、螢幕朝上，保持 1 秒':!Number.isFinite(e.webkitCompassHeading)?'瀏覽器尚未提供羅盤方位；請確認方向權限':!Number.isFinite(e.webkitCompassAccuracy)?'羅盤精度未提供，正在取得方向':e.webkitCompassAccuracy<0?'羅盤回報尚未校正（-1），請稍微轉動裝置後重新平放':`羅盤估計誤差 ±${Math.round(e.webkitCompassAccuracy)}°，目前不足以自動對準；可改用相機對齊`;}}
+ else {compassAccuracy=Number.isFinite(e.webkitCompassAccuracy)?e.webkitCompassAccuracy:null;sensorMessage=alignment?'已依畫面對齊；若偏移可重新對齊':compassQuality();}
  applyPose({...q,az:C.wrap(q.az+offset)},dt);if(now-lastSensorPaint>150){lastSensorPaint=now;sensorStatus(sensorMessage);}if(e.absolute)changeDirectionUI();
  }
  async function retryDirection(){resetDirection();await startSensor();}
