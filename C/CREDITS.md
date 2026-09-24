@@ -35,3 +35,9 @@ A、B、C 包含相同的搜尋、拖曳／縮放、時間播放／倒轉、地�
 
 ## 0.3.4 觀測修正
 預設隱藏密集 DSO／銀河輪廓；定位回报誤差。Safari 相對姿態需已知地標方位校正，未校正不顯示 AR 星體／方位；不把 webkitCompassHeading 當成 Euler alpha。太陽數據用於方向參考，勿直視太陽校正。新版仍待實體 iPad 重測。
+
+
+## 0.3.12 磁北換算真北
+- geomagnetism 0.2.0，Natural Atlas & contributors，Apache-2.0；授權見 vendor/GEOMAGNETISM-LICENSE.txt。來源：https://github.com/naturalatlas/geomagnetism
+- WMM2025 地磁模型由 NOAA NCEI／BGS 提供：https://www.ncei.noaa.gov/products/world-magnetic-model
+- 本版修改：瀏覽器離線封裝、UTC 閏年分數、2025–2029 有效日期與弱磁場判斷。採海平面估计，不修正當地磁場干擾。
